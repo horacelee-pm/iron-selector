@@ -930,7 +930,7 @@
     } else if (aiMeta && aiMeta.mode === 'error') {
       aiBox.style.display = 'block';
       aiLabel.textContent = 'AI analysis unavailable';
-      aiText.textContent = "We couldn't analyze your notes this time (check your API key and connection) — the diagnosis above is based on your measured inputs only.";
+      aiText.textContent = "We couldn't analyze your notes this time (a connection or server issue) — the diagnosis above is based on your measured inputs only.";
     } else {
       aiBox.style.display = 'none';
     }
