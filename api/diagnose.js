@@ -32,6 +32,13 @@ export default async function handler(req) {
   if (!apiKey) {
     return json({ error: 'Server is not configured with an API key. Set ANTHROPIC_API_KEY in the Vercel project settings.' }, 500);
   }
+  // Identity-linked API keys (tied to your Anthropic account rather than a
+  // single workspace) require this header on every request, naming which
+  // workspace the request acts in. Set ANTHROPIC_WORKSPACE_ID alongside
+  // ANTHROPIC_API_KEY in Vercel if your key is identity-linked (the
+  // Anthropic Console shows the workspace ID under the workspace's
+  // settings). Workspace-scoped keys don't need this and can leave it unset.
+  const workspaceId = process.env.ANTHROPIC_WORKSPACE_ID;
 
   let body;
   try {
@@ -58,7 +65,8 @@ export default async function handler(req) {
       headers: {
         'content-type': 'application/json',
         'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
+        ...(workspaceId ? { 'anthropic-workspace-id': workspaceId } : {})
       },
       body: JSON.stringify({
         model: MODEL,
