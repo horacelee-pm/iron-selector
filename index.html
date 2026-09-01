@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iron Selector — Diagnose Your Iron Fit</title>
+<style>
+  :root{
+    --green-900:#0b3d2e;
+    --green-700:#14532d;
+    --green-600:#1e6b3e;
+    --green-500:#2f8f52;
+    --green-100:#e8f3ec;
+    --sand:#f6f4ee;
+    --white:#ffffff;
+    --ink:#1c2b24;
+    --muted:#5c6b63;
+    --gold:#c9a24b;
+    --danger:#b3412f;
+    --radius:14px;
+    --shadow: 0 8px 24px rgba(11,61,46,0.12);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(180deg, var(--green-900) 0%, var(--green-700) 280px, var(--sand) 280px);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  .wrap{
+    max-width:820px;
+    margin:0 auto;
+    padding:0 20px 60px;
+  }
+  header.hero{
+    padding:48px 20px 32px;
+    text-align:center;
+    color:var(--white);
+  }
+  header.hero .badge{
+    display:inline-block;
+    background:rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.25);
+    padding:5px 14px;
+    border-radius:999px;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  header.hero h1{
+    margin:0 0 10px;
+    font-size:clamp(28px,4vw,40px);
+    font-weight:700;
+  }
+  header.hero p{
+    margin:0 auto;
+    max-width:560px;
+    color:rgba(255,255,255,0.85);
+    font-size:16px;
+    line-height:1.5;
+  }
+  .card{
+    background:var(--white);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:32px;
+    margin-top:-16px;
+  }
+  .progress{
+    display:flex;
+    gap:6px;
+    margin-bottom:28px;
+  }
+  .progress .dot{
+    flex:1;
+    height:4px;
+    border-radius:2px;
+    background:#e2e7e3;
+    transition:background 0.2s;
+  }
+  .progress .dot.active{background:var(--green-500);}
+  fieldset{
+    border:none;
+    padding:0;
+    margin:0 0 26px;
+  }
+  legend{
+    font-weight:700;
+    font-size:15px;
+    color:var(--green-700);
+    margin-bottom:10px;
+    padding:0;
+  }
+  label{
+    display:block;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--ink);
+    margin:14px 0 6px;
+  }
+  label .hint{
+    display:block;
+    font-weight:400;
+    color:var(--muted);
+    font-size:12.5px;
+    margin-top:2px;
+  }
+  input[type="number"], input[type="text"], input[type="password"], select, textarea{
+    width:100%;
+    padding:11px 13px;
+    border:1.5px solid #dde3de;
+    border-radius:9px;
+    font-size:14.5px;
+    font-family:inherit;
+    color:var(--ink);
+    background:var(--white);
+    transition:border-color 0.15s, box-shadow 0.15s;
+  }
+  textarea{
+    resize:vertical;
+    min-height:88px;
+    line-height:1.5;
+  }
+  input:focus, select:focus, textarea:focus{
+    outline:none;
+    border-color:var(--green-500);
+    box-shadow:0 0 0 3px rgba(47,143,82,0.15);
+  }
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  @media (max-width:600px){
+    .row2, .toggle-2, .toggle-3{grid-template-columns:1fr;}
+  }
+  .toggle-2, .toggle-3{
+    display:grid;
+    gap:8px;
+    margin-top:6px;
+  }
+  .toggle-2{grid-template-columns:1fr 1fr;}
+  .toggle-3{grid-template-columns:1fr 1fr 1fr;}
+  .toggle-2 button, .toggle-3 button{
+    padding:10px 8px;
+    border-radius:8px;
+    border:1.5px solid #dde3de;
+    background:var(--white);
+    font-size:13px;
+    font-weight:600;
+    color:var(--muted);
+    cursor:pointer;
+    text-align:center;
+  }
+  .toggle-2 button.selected, .toggle-3 button.selected{
+    border-color:var(--green-500);
+    background:var(--green-100);
+    color:var(--green-700);
+  }
+  .submit-btn{
+    width:100%;
+    padding:15px;
+    background:var(--green-600);
+    color:var(--white);
+    border:none;
+    border-radius:10px;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    margin-top:8px;
+    transition:background 0.15s;
+  }
+  .submit-btn:hover{background:var(--green-700);}
+  .submit-btn:disabled{background:#9db8a8; cursor:default;}
+  .error-msg{
+    color:var(--danger);
+    font-size:12.5px;
+    margin-top:16px;
+    display:none;
+  }
+  /* Results */
+  #results{display:none;}
+  .result-header{
+    text-align:center;
+    padding-bottom:22px;
+    border-bottom:1px solid #e9ede9;
+    margin-bottom:22px;
+  }
+  .result-header .top-kicker{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--green-600);
+    margin-bottom:6px;
+  }
+  .result-header h2{
+    margin:0 0 10px;
+    font-size:26px;
+    color:var(--green-700);
+  }
+  .confidence-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  .confidence-text-label{
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--muted);
+  }
+  .confidence-badge{
+    display:inline-block;
+    padding:5px 14px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+  }
+  .confidence-badge.high{background:var(--green-100); color:var(--green-700);}
+  .confidence-badge.medium{background:#fbf1d8; color:#8a6a1c;}
+  .confidence-badge.low{background:#f3e7e4; color:var(--danger);}
+  .section-title{
+    font-size:14px;
+    font-weight:700;
+    color:var(--green-700);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    margin:26px 0 12px;
+  }
+  .diagnosis-card{
+    background:var(--green-100);
+    border:1.5px solid var(--green-500);
+    border-radius:14px;
+    padding:20px 22px;
+  }
+  .diagnosis-card .diagnosis-label{
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--green-700);
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .diagnosis-card .diagnosis-recommendation{
+    font-size:19px;
+    font-weight:700;
+    color:var(--ink);
+    margin:4px 0 10px;
+    line-height:1.35;
+  }
+  .diagnosis-card p{
+    margin:0;
+    font-size:14.5px;
+    line-height:1.55;
+    color:var(--ink);
+  }
+  ul.why-list{
+    margin:0;
+    padding:0;
+    list-style:none;
+  }
+  ul.why-list li{
+    padding:9px 0 9px 26px;
+    position:relative;
+    font-size:14.5px;
+    line-height:1.5;
+    border-bottom:1px solid #f1f3f1;
+  }
+  ul.why-list li:before{
+    content:"✓";
+    position:absolute;
+    left:0;
+    top:9px;
+    color:var(--green-500);
+    font-weight:700;
+  }
+  .review-details{
+    margin-top:26px;
+    border:1.5px solid #e9ede9;
+    border-radius:12px;
+    padding:0 18px;
+    background:var(--sand);
+  }
+  .review-details summary{
+    cursor:pointer;
+    padding:14px 0;
+    font-size:13px;
+    font-weight:700;
+    color:var(--green-700);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .review-details[open] summary{
+    border-bottom:1px solid #e2e7e3;
+    margin-bottom:4px;
+  }
+  .review-group{
+    padding:12px 0;
+  }
+  .review-row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:6px 0;
+    font-size:13.5px;
+    border-bottom:1px solid #eef1ee;
+  }
+  .review-row:last-child{border-bottom:none;}
+  .review-row .review-label{color:var(--muted);}
+  .review-row .review-value{color:var(--ink); font-weight:600; text-align:right;}
+  .disclaimer{
+    margin-top:28px;
+    padding:14px 16px;
+    background:#fbf6ea;
+    border:1px solid #eddfb8;
+    border-radius:10px;
+    font-size:12.5px;
+    color:#6b5a2c;
+    line-height:1.5;
+  }
+  .ai-insight{
+    margin-top:18px;
+    padding:14px 16px;
+    background:#eef2fb;
+    border:1px solid #ccd7f0;
+    border-radius:10px;
+  }
+  .ai-insight .ai-insight-label{
+    font-size:11.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:#33508f;
+    margin-bottom:4px;
+  }
+  .ai-insight p{
+    margin:0;
+    font-size:13.5px;
+    line-height:1.5;
+    color:var(--ink);
+  }
+  .restart-btn{
+    display:block;
+    width:100%;
+    margin-top:22px;
+    padding:13px;
+    background:transparent;
+    border:1.5px solid var(--green-600);
+    color:var(--green-700);
+    border-radius:10px;
+    font-weight:700;
+    font-size:14.5px;
+    cursor:pointer;
+  }
+  .restart-btn:hover{background:var(--green-100);}
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:12px;
+    margin-top:24px;
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <span class="badge">Iron Selector</span>
+  <h1>Find out if your irons are holding you back</h1>
+  <p>Tell us about your current iron setup and how you're actually striking the ball — we'll run it through a deterministic diagnostic to see whether your clubhead category or shaft is the likely culprit.</p>
+</header>
+
+<div class="wrap">
+  <div class="card">
+
+    <div class="progress" id="progress">
+      <div class="dot active" data-step="1"></div>
+      <div class="dot" data-step="2"></div>
+    </div>
+
+    <form id="intakeForm">
+      <fieldset>
+        <legend>1. Your current setup</legend>
+
+        <label for="ironCategory">Current iron category</label>
+        <select id="ironCategory">
+          <option value="" selected disabled>Select category…</option>
+          <option value="Muscle Back">Muscle Back</option>
+          <option value="Players Cavity Back">Players Cavity Back</option>
+          <option value="Players Distance">Players Distance</option>
+          <option value="Game Improvement">Game Improvement</option>
+          <option value="Super Game Improvement">Super Game Improvement</option>
+        </select>
+
+        <label>Shaft type</label>
+        <div class="toggle-2" id="shaftTypeToggle">
+          <button type="button" data-value="Steel" onclick="selectSingle('shaftType','Steel')">Steel</button>
+          <button type="button" data-value="Graphite" onclick="selectSingle('shaftType','Graphite')">Graphite</button>
+        </div>
+
+        <label for="shaftFlex">Shaft flex</label>
+        <select id="shaftFlex">
+          <option value="" selected disabled>Select flex…</option>
+          <option value="Senior">Senior</option>
+          <option value="Regular">Regular</option>
+          <option value="Stiff">Stiff</option>
+          <option value="Extra Stiff">Extra Stiff</option>
+        </select>
+
+        <label for="handicap">Handicap</label>
+        <input type="number" id="handicap" placeholder="e.g. 12" min="-10" max="54" step="0.1">
+      </fieldset>
+
+      <fieldset>
+        <legend>2. Your current performance</legend>
+
+        <div class="row2">
+          <div>
+            <label for="swingSpeed">7-iron swing speed (mph)</label>
+            <input type="number" id="swingSpeed" placeholder="e.g. 82" min="40" max="130">
+          </div>
+          <div>
+            <label for="carryDistance">7-iron carry distance (yards)</label>
+            <input type="number" id="carryDistance" placeholder="e.g. 150" min="60" max="230">
+          </div>
+        </div>
+
+        <label for="strikeLocation">Strike location tendency</label>
+        <select id="strikeLocation">
+          <option value="" selected disabled>Select tendency…</option>
+          <option value="Center">Center</option>
+          <option value="Toe">Toe</option>
+          <option value="Heel">Heel</option>
+          <option value="Thin">Thin</option>
+          <option value="Fat">Fat</option>
+          <option value="Mixed">Mixed</option>
+        </select>
+
+        <label for="mishit">Mishit tendency</label>
+        <select id="mishit">
+          <option value="" selected disabled>Select tendency…</option>
+          <option value="Straight">Straight (no consistent miss)</option>
+          <option value="Draw">Draw</option>
+          <option value="Hook">Hook</option>
+          <option value="Fade">Fade</option>
+          <option value="Slice">Slice</option>
+          <option value="Mixed">Mixed</option>
+        </select>
+
+        <label>Trajectory</label>
+        <div class="toggle-3" id="trajectoryToggle">
+          <button type="button" data-value="Low" onclick="selectSingle('trajectory','Low')">Low</button>
+          <button type="button" data-value="Mid" onclick="selectSingle('trajectory','Mid')">Mid</button>
+          <button type="button" data-value="High" onclick="selectSingle('trajectory','High')">High</button>
+        </div>
+
+        <label for="performanceComments">Anything else about how your irons perform?
+          <span class="hint">Optional — freeform notes (e.g. specific yardage gaps, feel on off-center hits, conditions where it's worse).</span>
+        </label>
+        <textarea id="performanceComments" placeholder="e.g. My 7-iron feels great but I lose distance badly on anything but a pure strike..."></textarea>
+      </fieldset>
+
+      <div class="error-msg" id="errorMsg"></div>
+      <button type="submit" class="submit-btn" id="submitBtn">Get My Diagnosis</button>
+    </form>
+
+    <div id="results">
+      <div class="result-header">
+        <div class="top-kicker">Diagnosis</div>
+        <h2 id="diagnosisTitle">—</h2>
+        <div class="confidence-row">
+          <span class="confidence-text-label">Recommendation Confidence:</span>
+          <span class="confidence-badge" id="confidenceBadge">—</span>
+        </div>
+      </div>
+
+      <div class="diagnosis-card">
+        <div class="diagnosis-label">Recommendation</div>
+        <div class="diagnosis-recommendation" id="diagnosisRecommendation">—</div>
+        <p id="diagnosisExplanation">—</p>
+      </div>
+
+      <div class="ai-insight" id="aiInsight" style="display:none;">
+        <div class="ai-insight-label" id="aiInsightLabel"></div>
+        <p id="aiInsightText"></p>
+      </div>
+
+      <div class="section-title">Why this fits your inputs</div>
+      <ul class="why-list" id="whyList"></ul>
+
+      <details class="review-details" id="reviewDetails">
+        <summary>Review your inputs</summary>
+        <div id="reviewGrid"></div>
+      </details>
+
+      <div class="disclaimer" id="disclaimerText">
+        This diagnosis was generated by a deterministic, rules-based formula using the details you provided — it isn't a substitute for an in-person or launch-monitor fitting with a certified club fitter, who can confirm swing speed, strike quality, and shaft response directly.
+      </div>
+
+      <button class="restart-btn" onclick="restart()">Start Over</button>
+    </div>
+
+  </div>
+  <footer>Iron Selector · Diagnostic tool for iron category and shaft fit — not a purchase recommendation</footer>
+</div>
+
+<script>
+  // ============================================================
+  // Reference data
+  // ============================================================
+
+  // Forgiveness ladder, weakest-forgiveness to strongest-forgiveness.
+  const CATEGORY_LADDER = ["Muscle Back", "Players Cavity Back", "Players Distance", "Game Improvement", "Super Game Improvement"];
+
+  // Loft-proxy adjustment to expected carry, by current category (Step 1).
+  const CATEGORY_LOFT_ADJ = {
+    "Muscle Back": 0,
+    "Players Cavity Back": 0,
+    "Players Distance": 4,
+    "Game Improvement": 7,
+    "Super Game Improvement": 10
+  };
+
+  // Shaft flex ladder, softest to stiffest.
+  const FLEX_LADDER = ["Senior", "Regular", "Stiff", "Extra Stiff"];
+
+  // Swing speed (7i, mph) -> expected carry (yards), well-struck-ball assumption.
+  const CARRY_TABLE = [
+    { speed: 56, carry: 108 },
+    { speed: 64, carry: 123 },
+    { speed: 72, carry: 138 },
+    { speed: 80, carry: 154 },
+    { speed: 88, carry: 169 },
+    { speed: 96, carry: 184 },
+    { speed: 104, carry: 200 }
+  ];
+
+  // ============================================================
+  // AI-assisted freeform comment analysis (optional, client-side)
+  // ============================================================
+  // The deterministic engine above remains the primary source of the diagnosis.
+  // AI is used in three bounded ways only:
+  //   1. Evidence extractor — when a rule already fired (and isn't inconclusive
+  //      or well-fit), classify whether the freeform comment supports/
+  //      contradicts/is neutral toward that diagnosis, and nudge confidence by
+  //      at most one step. Never changes which rule fired or the
+  //      recommendation text.
+  //   2. Tiebreaker — when the deterministic result is inconclusive
+  //      (Rule E / E-fallback), ask which known root-cause category the
+  //      comment points to. Confidence is capped at Medium.
+  //   3. Well-fit override — when the deterministic result is Rule F
+  //      (negligible distance gap → well-fit), a small yardage gap alone
+  //      doesn't rule out a clubhead or shaft mismatch the golfer can feel
+  //      but that happens to average out in distance (e.g. mis-hits that go
+  //      both short and long). Ask the same tiebreak question; if the
+  //      comment clearly points to a specific root cause, that overrides
+  //      "well-fit" with the AI-suggested diagnosis. Confidence is capped at
+  //      Medium, same as the inconclusive tiebreaker.
+
+  const AI_TAG_ENUM = [
+    "distance-loss-on-mishit", "harsh-feedback", "low-flight-complaint",
+    "high-flight-complaint", "inconsistent-contact-complaint",
+    "specific-yardage-mentioned", "fatigue-or-effort-complaint", "directional-miss-complaint"
+  ];
+
+  const ALIGNMENT_TOOL = {
+    name: "evaluate_comment_alignment",
+    description: "Classify a golfer's freeform comment against a diagnosis already reached by a deterministic rules engine. Do not propose an alternative diagnosis.",
+    input_schema: {
+      type: "object",
+      properties: {
+        hasSignal: { type: "boolean", description: "False if the comment is empty, off-topic, or has no relevant signal." },
+        tags: { type: "array", items: { type: "string", enum: AI_TAG_ENUM } },
+        alignment: { type: "string", enum: ["supports", "contradicts", "neutral"] },
+        confidenceAdjustment: { type: "string", enum: ["increase", "decrease", "none"] },
+        rationale: { type: "string", maxLength: 200 }
+      },
+      required: ["hasSignal", "alignment", "confidenceAdjustment", "rationale"]
+    }
+  };
+
+  const TIEBREAK_TOOL = {
+    name: "evaluate_comment_tiebreak",
+    description: "When a deterministic rules engine's measured signals were inconclusive, or concluded a negligible distance gap means well-fit, decide whether a golfer's freeform comment points to a specific root cause among a fixed set of categories.",
+    input_schema: {
+      type: "object",
+      properties: {
+        hasSignal: { type: "boolean" },
+        tags: { type: "array", items: { type: "string", enum: AI_TAG_ENUM } },
+        suggestedDiagnosis: { type: "string", enum: ["forgiveness", "shaft-stiff", "shaft-flexible", "shaft-weight", "well-fit", "inconclusive"] },
+        confidence: { type: "string", enum: ["Low", "Medium"] },
+        rationale: { type: "string", maxLength: 200 }
+      },
+      required: ["hasSignal", "suggestedDiagnosis", "confidence", "rationale"]
+    }
+  };
+
+  const CONFIDENCE_LADDER = ["Low", "Medium", "High"];
+  function adjustConfidence(current, direction){
+    const idx = CONFIDENCE_LADDER.indexOf(current);
+    if (idx === -1) return current;
+    if (direction === 'increase') return CONFIDENCE_LADDER[Math.min(idx + 1, CONFIDENCE_LADDER.length - 1)];
+    if (direction === 'decrease') return CONFIDENCE_LADDER[Math.max(idx - 1, 0)];
+    return current;
+  }
+
+  function buildFactsSummary(data, result){
+    return `swing speed ${data.swingSpeed} mph, category ${data.category}, expected 7-iron carry ${Math.round(result.facts.expected)} yds, actual carry ${data.carryDistance} yds (gap ${Math.round(result.facts.gap)} yds, ${result.facts.magnitude}), strike location tendency ${data.strikeLocation} (${result.facts.strike}), mishit tendency ${data.mishit}, trajectory ${data.trajectory}, shaft ${data.shaftType}/${data.shaftFlex}, handicap ${data.handicap}`;
+  }
+
+  async function callClaudeTool(tool, promptText, timeoutMs){
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs || 15000);
+    try {
+      // Calls our own serverless proxy (/api/diagnose) rather than Anthropic
+      // directly — the Anthropic API key lives server-side only (set as the
+      // ANTHROPIC_API_KEY environment variable in the Vercel project), so it
+      // never reaches the browser.
+      const resp = await fetch('/api/diagnose', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ tool, promptText }),
+        signal: controller.signal
+      });
+      if (!resp.ok) throw new Error(`API error ${resp.status}`);
+      const json = await resp.json();
+      if (!json || !json.input) throw new Error('No tool input in response');
+      return json.input;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function getAiAlignment(data, result){
+    const prompt = `You are assisting a deterministic golf club-fitting tool. A rules engine already reached this diagnosis from measured swing data:\n\nDiagnosis: ${result.diagnosis}\nRecommendation: ${result.recommendation}\nMeasured facts: ${buildFactsSummary(data, result)}.\n\nThe golfer also wrote this freeform note about how their irons perform:\n"${data.performanceComments}"\n\nClassify whether this note supports, contradicts, or is neutral toward the diagnosis above. Only use information actually present in the note — do not invent claims. If the note is empty, off-topic, or contains no relevant signal, set hasSignal to false.`;
+    return callClaudeTool(ALIGNMENT_TOOL, prompt);
+  }
+
+  async function getAiTiebreak(data, result){
+    const wasWellFit = result.diagnosis === 'well-fit';
+    const context = wasWellFit
+      ? `The rules engine measured a negligible distance gap (within 3 yards of the ${Math.round(result.facts.expected)}-yard expectation for this swing speed) and concluded the setup is well-fit based on distance alone. A small yardage gap doesn't rule out a clubhead or shaft mismatch the golfer can feel but that happens to average out in distance (e.g. mis-hits that go both short and long).`
+      : `The rules engine's measured signals were inconclusive — no single root cause matched cleanly.`;
+    const fallbackDiagnosis = wasWellFit ? 'well-fit' : 'inconclusive';
+    const prompt = `You are assisting a deterministic golf club-fitting tool. ${context}\n\nMeasured facts: ${buildFactsSummary(data, result)}.\n\nThe golfer also wrote this freeform note about how their irons perform:\n"${data.performanceComments}"\n\nDecide whether this note points to one of these root causes: forgiveness (clubhead too unforgiving for strike quality), shaft-stiff (shaft too stiff), shaft-flexible (shaft too flexible), shaft-weight (shaft too heavy for their swing), well-fit (note supports the well-fit conclusion or raises no mismatch — only choose this when a well-fit conclusion was reached), or inconclusive (note doesn't clearly point anywhere). Only use information actually present in the note — do not invent claims beyond what's written. Cap your confidence at Medium; never return High. If the note is empty, off-topic, or has no relevant signal, set hasSignal to false and suggestedDiagnosis to "${fallbackDiagnosis}".`;
+    return callClaudeTool(TIEBREAK_TOOL, prompt);
+  }
+
+  function buildTiebreakRecommendation(diagnosis, data){
+    if (diagnosis === 'forgiveness') {
+      const idx = CATEGORY_LADDER.indexOf(data.category);
+      if (idx === CATEGORY_LADDER.length - 1) {
+        return 'Forgiveness is already maxed out for your category — an in-person fitting is the safer next step.';
+      }
+      return `Consider moving up one step on the forgiveness ladder: ${data.category} → ${CATEGORY_LADDER[idx + 1]}.`;
+    }
+    if (diagnosis === 'shaft-stiff') {
+      const flexIdx = FLEX_LADDER.indexOf(data.shaftFlex);
+      if (flexIdx === 0) return "Your notes suggest a shaft-stiffness issue, but you're already on Senior flex, the softest option — worth a fitting to confirm.";
+      return `Consider moving one step softer on shaft flex: ${data.shaftFlex} → ${FLEX_LADDER[flexIdx - 1]}.`;
+    }
+    if (diagnosis === 'shaft-flexible') {
+      const flexIdx = FLEX_LADDER.indexOf(data.shaftFlex);
+      if (flexIdx === FLEX_LADDER.length - 1) return "Your notes suggest a shaft-flex issue, but you're already on Extra Stiff, the stiffest option — worth a fitting to confirm.";
+      return `Consider moving one step stiffer on shaft flex: ${data.shaftFlex} → ${FLEX_LADDER[flexIdx + 1]}.`;
+    }
+    if (diagnosis === 'shaft-weight') {
+      return data.shaftType === 'Steel'
+        ? 'Consider evaluating a graphite shaft in a similar flex.'
+        : 'Consider a lighter graphite weight class in the same flex family.';
+    }
+    return null;
+  }
+
+  let selectedShaftType = null;
+  let selectedTrajectory = null;
+
+  function selectSingle(kind, val){
+    if (kind === 'shaftType') selectedShaftType = val;
+    if (kind === 'trajectory') selectedTrajectory = val;
+    const containerId = kind === 'shaftType' ? 'shaftTypeToggle' : 'trajectoryToggle';
+    document.querySelectorAll(`#${containerId} button`).forEach(b=>{
+      b.classList.toggle('selected', b.dataset.value === val);
+    });
+  }
+
+  // ============================================================
+  // Step 1 — Expected Carry Distance
+  // ============================================================
+  function expectedCarry(swingSpeed, category){
+    const t = CARRY_TABLE;
+    let base;
+    if (swingSpeed <= t[0].speed) {
+      const slope = (t[1].carry - t[0].carry) / (t[1].speed - t[0].speed);
+      base = t[0].carry + slope * (swingSpeed - t[0].speed);
+    } else if (swingSpeed >= t[t.length - 1].speed) {
+      const last = t.length - 1;
+      const slope = (t[last].carry - t[last - 1].carry) / (t[last].speed - t[last - 1].speed);
+      base = t[last].carry + slope * (swingSpeed - t[last].speed);
+    } else {
+      for (let i = 0; i < t.length - 1; i++) {
+        if (swingSpeed >= t[i].speed && swingSpeed <= t[i + 1].speed) {
+          const slope = (t[i + 1].carry - t[i].carry) / (t[i + 1].speed - t[i].speed);
+          base = t[i].carry + slope * (swingSpeed - t[i].speed);
+          break;
+        }
+      }
+    }
+    return base + (CATEGORY_LOFT_ADJ[category] || 0);
+  }
+
+  // ============================================================
+  // Step 2 — Distance Gap
+  // ============================================================
+  function gapMagnitude(gap){
+    const abs = Math.abs(gap);
+    if (abs <= 3) return 'negligible';
+    if (abs <= 8) return 'moderate';
+    return 'significant';
+  }
+
+  // ============================================================
+  // Step 3 — Strike Quality
+  // ============================================================
+  function classifyStrike(data){
+    if (data.category === 'Game Improvement' || data.category === 'Super Game Improvement') return 'inconsistent';
+    return data.strikeLocation === 'Center' ? 'consistent' : 'inconsistent';
+  }
+
+  // ============================================================
+  // Step 4 — Root-Cause Attribution Rules (first match wins)
+  // ============================================================
+  function computeDiagnosis(data){
+    const expected = expectedCarry(data.swingSpeed, data.category);
+    const gap = data.carryDistance - expected; // positive = longer than expected, negative = shorter
+    const magnitude = gapMagnitude(gap);
+    const strike = classifyStrike(data);
+    const facts = { expected, gap, magnitude, strike };
+
+    // Rule A0 — Inconsistent striker + low trajectory: shaft weight/stiffness is
+    // likely undermining both strike consistency and launch, regardless of the
+    // distance gap. Evaluated first — fires even when the gap is negligible.
+    if (strike === 'inconsistent' && data.trajectory === 'Low') {
+      const confidence = data.shaftType === 'Graphite' ? 'High' : 'Medium';
+      const recommendation = data.shaftType === 'Steel'
+        ? 'Move to a lighter shaft: consider switching from Steel to Graphite to help both strike consistency and trajectory.'
+        : 'Consider an even lighter graphite weight class — you\'re already on graphite, but a lighter build may further help strike consistency and trajectory.';
+      return {
+        rule: 'A0', diagnosis: 'shaft-weight', confidence,
+        recommendation,
+        explanation: `Your strike location tendency is inconsistent and your ball flight is low — that combination often points to a shaft that's too heavy or stiff to control consistently, rather than (or in addition to) a clubhead forgiveness issue. A lighter shaft is typically easier to square up and naturally launches higher.`,
+        facts
+      };
+    }
+
+    // Rule F short-circuit
+    if (magnitude === 'negligible') {
+      return {
+        rule: 'F', diagnosis: 'well-fit', confidence: 'High',
+        recommendation: 'No change — your current setup matches your swing profile.',
+        explanation: `Your reported carry is within 3 yards of the ${Math.round(expected)}-yard carry expected for a ${data.swingSpeed} mph swing speed, so there's no material gap to investigate.`,
+        facts
+      };
+    }
+
+    // Rule A — Forgiveness issue (clubhead mismatch)
+    if (strike === 'inconsistent') {
+      const idx = CATEGORY_LADDER.indexOf(data.category);
+      let confidence = magnitude === 'significant' ? 'High' : 'Medium';
+      if (data.handicap >= 15) confidence = 'High';
+      if (idx === CATEGORY_LADDER.length - 1) {
+        return {
+          rule: 'A-ceiling', diagnosis: 'forgiveness', confidence,
+          recommendation: 'Forgiveness is already maxed out — consider an in-person fitting or lessons instead of another equipment change.',
+          explanation: `You're an inconsistent striker (your current category is Super Game Improvement, the most forgiving tier) and your carry is ${Math.abs(Math.round(gap))} yards ${gap < 0 ? 'short of' : 'longer than'} expected — but there's no further step up the forgiveness ladder to recommend.`,
+          facts
+        };
+      }
+      const nextCategory = CATEGORY_LADDER[idx + 1];
+      return {
+        rule: 'A', diagnosis: 'forgiveness', confidence,
+        recommendation: `Move up one step on the forgiveness ladder: ${data.category} → ${nextCategory}.`,
+        explanation: `Your strike quality looks inconsistent (${data.category === 'Game Improvement' || data.category === 'Super Game Improvement' ? `you're already playing a ${data.category} iron` : `strike location tendency: ${data.strikeLocation}`}) and your carry is ${Math.abs(Math.round(gap))} yards ${gap < 0 ? 'short of' : 'longer than'} the ${Math.round(expected)}-yard expectation for your swing speed — this points to a clubhead that isn't forgiving enough for your strike quality, more than a shaft issue.`,
+        facts
+      };
+    }
+
+    // Rule B — Shaft too stiff (consistent striker, came up short, low flight, fade/slice)
+    if (gap < 0 && data.trajectory === 'Low' && (data.mishit === 'Fade' || data.mishit === 'Slice')) {
+      const flexIdx = FLEX_LADDER.indexOf(data.shaftFlex);
+      if (flexIdx === 0) {
+        return {
+          rule: 'B-anomaly', diagnosis: 'shaft-stiff', confidence: 'Low',
+          recommendation: 'Data-quality anomaly — your flex is already Senior, the softest option, so this pattern is unexpected. Flag for review rather than acting on it directly.',
+          explanation: `Your signals (low trajectory, ${data.mishit.toLowerCase()}, ${Math.abs(Math.round(gap))} yards short) usually point to too stiff a shaft, but you're already on Senior flex, the softest available — worth double-checking your inputs or getting a launch-monitor session before making a change.`,
+          facts
+        };
+      }
+      const softer = FLEX_LADDER[flexIdx - 1];
+      return {
+        rule: 'B', diagnosis: 'shaft-stiff', confidence: 'High',
+        recommendation: `Move one step softer on shaft flex: ${data.shaftFlex} → ${softer}.`,
+        explanation: `Your strikes are consistent, but you're ${Math.abs(Math.round(gap))} yards short of the ${Math.round(expected)}-yard expectation for your swing speed, with a low, ${data.mishit.toLowerCase()}ing ball flight — this points to a shaft that's too stiff, leaving the face open at impact and costing speed and launch.`,
+        facts
+      };
+    }
+
+    // Rule C — Shaft too flexible (consistent striker, went long, high flight, draw/hook)
+    if (gap > 0 && data.trajectory === 'High' && (data.mishit === 'Draw' || data.mishit === 'Hook')) {
+      const flexIdx = FLEX_LADDER.indexOf(data.shaftFlex);
+      if (flexIdx === FLEX_LADDER.length - 1) {
+        return {
+          rule: 'C-anomaly', diagnosis: 'shaft-flexible', confidence: 'Low',
+          recommendation: 'Data-quality anomaly — your flex is already Extra Stiff, the stiffest option, so this pattern is unexpected. Flag for review rather than acting on it directly.',
+          explanation: `Your signals (high trajectory, ${data.mishit.toLowerCase()}, ${Math.abs(Math.round(gap))} yards long) usually point to too flexible a shaft, but you're already on Extra Stiff, the stiffest available — worth double-checking your inputs or getting a launch-monitor session before making a change.`,
+          facts
+        };
+      }
+      const stiffer = FLEX_LADDER[flexIdx + 1];
+      return {
+        rule: 'C', diagnosis: 'shaft-flexible', confidence: 'High',
+        recommendation: `Move one step stiffer on shaft flex: ${data.shaftFlex} → ${stiffer}.`,
+        explanation: `Your strikes are consistent, but you're ${Math.abs(Math.round(gap))} yards longer than the ${Math.round(expected)}-yard expectation for your swing speed, with a high, ${data.mishit.toLowerCase()}ing ball flight — this points to a shaft that's too flexible, over-releasing and adding excess spin and roll-out.`,
+        facts
+      };
+    }
+
+    // Rule D — Shaft too heavy (consistent striker, came up short, low flight, no directional bias)
+    if (gap < 0 && data.trajectory === 'Low' && data.mishit === 'Straight') {
+      const confidence = data.shaftType === 'Graphite' ? 'High' : 'Medium';
+      const recommendation = data.shaftType === 'Steel'
+        ? 'Consider evaluating a graphite shaft in a similar flex.'
+        : 'Consider a lighter graphite weight class in the same flex family.';
+      return {
+        rule: 'D', diagnosis: 'shaft-weight', confidence,
+        recommendation,
+        explanation: `Your strikes are consistent and there's no directional miss, but you're ${Math.abs(Math.round(gap))} yards short of the ${Math.round(expected)}-yard expectation for your swing speed with a low ball flight — without a face-angle symptom, this points to shaft weight likely robbing clubhead speed rather than flex.`,
+        facts
+      };
+    }
+
+    // Rule E — Inconclusive (consistent striker, mid trajectory, no clear directional signal)
+    if (data.trajectory === 'Mid' && (data.mishit === 'Straight' || data.mishit === 'Mixed')) {
+      const leanForgiveness = data.handicap >= 15;
+      let recommendation;
+      if (leanForgiveness) {
+        const idx = CATEGORY_LADDER.indexOf(data.category);
+        recommendation = idx === CATEGORY_LADDER.length - 1
+          ? 'Forgiveness is already maxed out for your category — an in-person fitting is the safer next step.'
+          : `As a safer default given your handicap, consider moving up one step on the forgiveness ladder: ${data.category} → ${CATEGORY_LADDER[idx + 1]}. Confirm with an in-person fitting.`;
+      } else {
+        recommendation = 'Consider a fitting session to fine-tune your current shaft flex and weight — your signals don\'t clearly point to a direction on their own.';
+      }
+      return {
+        rule: 'E', diagnosis: 'inconclusive', confidence: 'Low',
+        recommendation,
+        explanation: `Your strikes are consistent and you're ${Math.abs(Math.round(gap))} yards ${gap < 0 ? 'short of' : 'longer than'} expected, but with a mid trajectory and no clear miss pattern, the signals don't cleanly point to a shaft or clubhead cause — we used your handicap (${data.handicap}) as a tiebreaker.`,
+        facts
+      };
+    }
+
+    // Fallback — signals don't match any rule's exact pattern; treat as inconclusive.
+    return {
+      rule: 'E-fallback', diagnosis: 'inconclusive', confidence: 'Low',
+      recommendation: 'Consider a fitting session — your combination of signals doesn\'t cleanly match a single root cause in this first-pass model.',
+      explanation: `Your strikes are consistent and you're ${Math.abs(Math.round(gap))} yards ${gap < 0 ? 'short of' : 'longer than'} expected, but the combination of trajectory (${data.trajectory}) and mishit tendency (${data.mishit}) doesn't match a specific rule cleanly.`,
+      facts
+    };
+  }
+
+  const DIAGNOSIS_TITLES = {
+    'forgiveness': 'Clubhead forgiveness mismatch',
+    'shaft-stiff': 'Shaft is likely too stiff',
+    'shaft-flexible': 'Shaft is likely too flexible',
+    'shaft-weight': 'Shaft weight is likely an issue',
+    'inconclusive': 'Inconclusive — needs a closer look',
+    'well-fit': 'Your setup looks well-fit'
+  };
+
+  // ============================================================
+  // Form wiring
+  // ============================================================
+  function renderReview(data){
+    const container = document.getElementById('reviewGrid');
+    container.innerHTML = `
+      <div class="review-group">
+        <div class="review-row"><span class="review-label">Current iron category</span><span class="review-value">${data.category}</span></div>
+        <div class="review-row"><span class="review-label">Shaft type</span><span class="review-value">${data.shaftType}</span></div>
+        <div class="review-row"><span class="review-label">Shaft flex</span><span class="review-value">${data.shaftFlex}</span></div>
+        <div class="review-row"><span class="review-label">Handicap</span><span class="review-value">${data.handicap}</span></div>
+        <div class="review-row"><span class="review-label">7-iron swing speed</span><span class="review-value">${data.swingSpeed} mph</span></div>
+        <div class="review-row"><span class="review-label">7-iron carry distance</span><span class="review-value">${data.carryDistance} yds</span></div>
+        <div class="review-row"><span class="review-label">Trajectory</span><span class="review-value">${data.trajectory}</span></div>
+        <div class="review-row"><span class="review-label">Strike location tendency</span><span class="review-value">${data.strikeLocation}</span></div>
+        <div class="review-row"><span class="review-label">Mishit tendency</span><span class="review-value">${data.mishit}</span></div>
+        <div class="review-row"><span class="review-label">Additional comments</span><span class="review-value">${data.performanceComments ? data.performanceComments : '—'}</span></div>
+      </div>
+    `;
+  }
+
+  function renderResults(result, data, aiMeta){
+    document.getElementById('diagnosisTitle').textContent = DIAGNOSIS_TITLES[result.diagnosis] || result.diagnosis;
+
+    const badge = document.getElementById('confidenceBadge');
+    badge.textContent = result.confidence;
+    badge.className = 'confidence-badge ' + result.confidence.toLowerCase();
+
+    document.getElementById('diagnosisRecommendation').textContent = result.recommendation;
+    document.getElementById('diagnosisExplanation').textContent = result.explanation;
+
+    const aiBox = document.getElementById('aiInsight');
+    const aiLabel = document.getElementById('aiInsightLabel');
+    const aiText = document.getElementById('aiInsightText');
+    if (aiMeta && aiMeta.mode === 'tiebreak') {
+      aiBox.style.display = 'block';
+      aiLabel.textContent = 'AI-assisted interpretation';
+      aiText.textContent = `Your measured signals alone were inconclusive. Based on your notes: ${aiMeta.rationale} Treat this as a lead worth confirming, not a firm measurement.`;
+    } else if (aiMeta && aiMeta.mode === 'wellfit-override') {
+      aiBox.style.display = 'block';
+      aiLabel.textContent = 'AI-assisted interpretation';
+      aiText.textContent = `Your distance numbers alone looked well-fit (gap within 3 yards of expected), but your notes pointed to a likely mismatch: ${aiMeta.rationale} Treat this as a lead worth confirming with a fitting, not a firm measurement.`;
+    } else if (aiMeta && aiMeta.mode === 'wellfit-confirmed') {
+      aiBox.style.display = 'block';
+      aiLabel.textContent = 'AI read on your notes';
+      aiText.textContent = aiMeta.rationale || "Your notes didn't point to a specific mismatch, consistent with your distance numbers looking well-fit.";
+    } else if (aiMeta && aiMeta.mode === 'alignment') {
+      aiBox.style.display = 'block';
+      aiLabel.textContent = 'AI read on your notes';
+      aiText.textContent = aiMeta.rationale;
+    } else if (aiMeta && aiMeta.mode === 'error') {
+      aiBox.style.display = 'block';
+      aiLabel.textContent = 'AI analysis unavailable';
+      aiText.textContent = "We couldn't analyze your notes this time (check your API key and connection) — the diagnosis above is based on your measured inputs only.";
+    } else {
+      aiBox.style.display = 'none';
+    }
+
+    const whyList = document.getElementById('whyList');
+    whyList.innerHTML = "";
+    const expectedRounded = Math.round(result.facts.expected);
+    const gapRounded = Math.round(result.facts.gap);
+    const items = [
+      `Expected 7-iron carry for a ${data.swingSpeed} mph swing speed (adjusted for your ${data.category} category): ${expectedRounded} yards.`,
+      `You reported ${data.carryDistance} yards — a gap of ${Math.abs(gapRounded)} yards ${gapRounded < 0 ? 'short of' : gapRounded > 0 ? 'longer than' : 'from'} expected (${result.facts.magnitude}).`,
+      `Strike quality classified as ${result.facts.strike === 'consistent' ? 'Consistent Striker' : 'Inconsistent Striker'}${(data.category === 'Game Improvement' || data.category === 'Super Game Improvement') ? ' (based on your current forgiving category)' : ' (based on your reported strike location)'}.`,
+      `Trajectory: ${data.trajectory}. Mishit tendency: ${data.mishit}.`
+    ];
+    if (aiMeta && aiMeta.tags && aiMeta.tags.length) {
+      items.push(`Your notes also flagged: ${aiMeta.tags.join(', ').replace(/-/g, ' ')}.`);
+    }
+    items.forEach(text => {
+      const li = document.createElement('li');
+      li.textContent = text;
+      whyList.appendChild(li);
+    });
+
+    renderReview(data);
+
+    const disclaimerEl = document.getElementById('disclaimerText');
+    const aiContributed = !!(aiMeta && ['tiebreak', 'wellfit-override', 'wellfit-confirmed', 'alignment'].includes(aiMeta.mode));
+    disclaimerEl.textContent = aiContributed
+      ? "This diagnosis combines a deterministic, rules-based formula with AI-assisted interpretation of the notes you provided — it isn't a substitute for an in-person or launch-monitor fitting with a certified club fitter, who can confirm swing speed, strike quality, and shaft response directly."
+      : "This diagnosis was generated by a deterministic, rules-based formula using the details you provided — it isn't a substitute for an in-person or launch-monitor fitting with a certified club fitter, who can confirm swing speed, strike quality, and shaft response directly.";
+
+    document.getElementById('intakeForm').style.display = 'none';
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('progress').style.display = 'none';
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  document.getElementById('intakeForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+
+    const errorMsg = document.getElementById('errorMsg');
+    errorMsg.style.display = 'none';
+
+    const category = document.getElementById('ironCategory').value;
+    const shaftFlex = document.getElementById('shaftFlex').value;
+    const handicap = parseFloat(document.getElementById('handicap').value);
+    const swingSpeed = parseFloat(document.getElementById('swingSpeed').value);
+    const carryDistance = parseFloat(document.getElementById('carryDistance').value);
+    const strikeLocation = document.getElementById('strikeLocation').value;
+    const mishit = document.getElementById('mishit').value;
+    const performanceComments = document.getElementById('performanceComments').value.trim();
+
+    const missing = [];
+    if (!category) missing.push('current iron category');
+    if (!selectedShaftType) missing.push('shaft type');
+    if (!shaftFlex) missing.push('shaft flex');
+    if (isNaN(handicap)) missing.push('handicap');
+    if (isNaN(swingSpeed)) missing.push('7-iron swing speed');
+    if (isNaN(carryDistance)) missing.push('7-iron carry distance');
+    if (!selectedTrajectory) missing.push('trajectory');
+    if (!strikeLocation) missing.push('strike location tendency');
+    if (!mishit) missing.push('mishit tendency');
+
+    if (missing.length) {
+      errorMsg.textContent = `Please fill in: ${missing.join(', ')}.`;
+      errorMsg.style.display = 'block';
+      return;
+    }
+
+    const data = {
+      category,
+      shaftType: selectedShaftType,
+      shaftFlex,
+      handicap,
+      swingSpeed,
+      carryDistance,
+      trajectory: selectedTrajectory,
+      strikeLocation,
+      mishit,
+      performanceComments // Optionally factored in post-hoc by the AI evidence/tiebreak layer below — computeDiagnosis() itself stays deterministic and never reads this field.
+    };
+
+    const submitBtn = document.getElementById('submitBtn');
+
+    try {
+      let result = computeDiagnosis(data);
+      let aiMeta = null;
+
+      if (performanceComments) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Analyzing your notes…';
+        try {
+          if (result.diagnosis === 'inconclusive' || result.diagnosis === 'well-fit') {
+            const wasWellFit = result.diagnosis === 'well-fit';
+            const ai = await getAiTiebreak(data, result);
+            if (ai && ai.hasSignal && ai.suggestedDiagnosis && ai.suggestedDiagnosis !== 'inconclusive' && ai.suggestedDiagnosis !== 'well-fit') {
+              const newRecommendation = buildTiebreakRecommendation(ai.suggestedDiagnosis, data);
+              if (newRecommendation) {
+                result = {
+                  ...result,
+                  rule: result.rule + '+AI',
+                  diagnosis: ai.suggestedDiagnosis,
+                  confidence: ai.confidence === 'Medium' ? 'Medium' : 'Low',
+                  recommendation: newRecommendation,
+                  explanation: wasWellFit
+                    ? `Your measured distance gap was negligible, which on its own would mean a well-fit setup, but your notes pointed to a likely mismatch the yardage numbers didn't capture. ${ai.rationale || ''}`
+                    : `Your measured signals alone were inconclusive, but your notes helped point to a likely cause. ${ai.rationale || ''}`
+                };
+                aiMeta = { mode: wasWellFit ? 'wellfit-override' : 'tiebreak', tags: ai.tags || [], rationale: ai.rationale || '' };
+              }
+            } else if (wasWellFit && ai && ai.hasSignal) {
+              aiMeta = { mode: 'wellfit-confirmed', tags: ai.tags || [], rationale: ai.rationale || '' };
+            }
+          } else {
+            const ai = await getAiAlignment(data, result);
+            if (ai && ai.hasSignal) {
+              const direction = ai.alignment === 'supports' ? 'increase' : ai.alignment === 'contradicts' ? 'decrease' : 'none';
+              result.confidence = adjustConfidence(result.confidence, direction);
+              aiMeta = { mode: 'alignment', tags: ai.tags || [], rationale: ai.rationale || '' };
+            }
+          }
+        } catch (aiErr) {
+          aiMeta = { mode: 'error' };
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Get My Diagnosis';
+        }
+      }
+
+      renderResults(result, data, aiMeta);
+    } catch (err) {
+      errorMsg.textContent = `Couldn't generate a diagnosis: ${err.message}`;
+      errorMsg.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Get My Diagnosis';
+    }
+  });
+
+  function restart(){
+    document.getElementById('intakeForm').reset();
+    selectedShaftType = null;
+    selectedTrajectory = null;
+    document.querySelectorAll('#shaftTypeToggle button, #trajectoryToggle button').forEach(b=>b.classList.remove('selected'));
+    document.getElementById('errorMsg').style.display = 'none';
+    document.getElementById('aiInsight').style.display = 'none';
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').textContent = 'Get My Diagnosis';
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('intakeForm').style.display = 'block';
+    document.getElementById('progress').style.display = 'flex';
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+</script>
+
+</body>
+</html>
